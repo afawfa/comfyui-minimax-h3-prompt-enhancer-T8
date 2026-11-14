@@ -485,42 +485,48 @@ class LlamaServer:
         return self.log.read().decode("utf-8", errors="replace")[-4000:]
 
     def _start_arguments(self) -> list[str]:
-        arguments = [
-            str(self.spec.executable),
-            "--model",
-            str(self.model),
-            "--alias",
-            LOCAL_MODEL_ALIAS,
-            "--api-key",
-            self.token,
-            "--host",
-            "127.0.0.1",
-            "--port",
-            str(self.port),
-            "--ctx-size",
-            str(self.context_size),
-            "--parallel",
-            "1",
-            "--n-gpu-layers",
-            self.spec.n_gpu_layers,
-            "--flash-attn",
-            self.spec.flash_attention,
-            "--cache-type-k",
-            "q8_0",
-            "--cache-type-v",
-            "q8_0",
-            "--jinja",
-            "--no-webui",
-        ]
-        if _supports_server_reasoning_switch(self.spec):
-            arguments.extend(["--reasoning", "on" if self.think_mode else "off"])
-        if self.mmproj is not None:
-            arguments.extend(
-                ["--mmproj", str(self.mmproj), "--image-min-tokens", "1024", "--image-max-tokens", "1024"]
-            )
-        if self.spec.fit:
-            arguments.extend(["--fit", "on", "--fit-target", str(self.spec.fit_target_mib)])
-        return arguments
+    arguments = [
+        str(self.spec.executable),
+        "--model",
+        str(self.model),
+        "--alias",
+        LOCAL_MODEL_ALIAS,
+        "--api-key",
+        self.token,
+        "--host",
+        "127.0.0.1",
+        "--port",
+        str(self.port),
+        "--ctx-size",
+        str(self.context_size),
+        "--parallel",
+        "1",
+        "--n-gpu-layers",
+        self.spec.n_gpu_layers,
+        "--flash-attn",
+        self.spec.flash_attention,
+        "--cache-type-k",
+        "q8_0",
+        "--cache-type-v",
+        "q8_0",
+        "--jinja",
+        "--no-webui",
+        # ==========新增双卡参数 层分流layer模式 并行row只需要改成row ==========
+        "-dev", "cuda0,cuda1",
+        "--split-mode", "row",
+        "--tensor-split", "1,1",
+        # ==========================================
+    ]
+    if _supports_server_reasoning_switch(self.spec):
+        arguments.extend(["--reasoning", "on" if self.think_mode else "off"])
+    if self.mmproj is not None:
+        arguments.extend(
+            ["--mmproj", str(self.mmproj), "--image-min-tokens", "1024", "--image-max-tokens", "1024"]
+        )
+    if self.spec.fit:
+        arguments.extend(["--fit", "on", "--fit-target", str(self.spec.fit_target_mib)])
+    return arguments
+
 
     def start(self, timeout: float = 240.0) -> None:
         arguments = self._start_arguments()
