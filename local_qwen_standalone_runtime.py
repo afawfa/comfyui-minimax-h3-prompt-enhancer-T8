@@ -513,7 +513,7 @@ class LlamaServer:
         "--no-webui",
         # ==========新增双卡参数 层分流layer模式 并行row只需要改成row ==========
         "-dev", "cuda0,cuda1",
-        "--split-mode", "row",
+        "--split-mode", "layer",
         "--tensor-split", "1,1",
         # ==========================================
     ]
